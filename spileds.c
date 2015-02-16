@@ -2,13 +2,8 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 #include <stdlib.h>
-#include "usb_debug_only.h"
-#include "print.h"
-#include "analog.h"
 
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
-
-
 
 #define DD_MOSI    PD7
 #define DD_SCK     PD6 // So we can see the activity on the LED
@@ -156,11 +151,7 @@ void random_flicker_random_hue(unsigned long t, uint8_t* buffer, uint16_t N)
 		int i = rand() % (N);
 		float hue = (float)(rand() & 0xff)/ (float)255.0;
 		h2rgb(hue,1.0,&buffer[i*3],&buffer[i*3+1],&buffer[i*3+2]);
-		//buffer[i*3] = 0xff;
-		//buffer[i*3+1] = 0xff;
-		//buffer[i*3+2] = 0xff;
 	}
-	
 }
 
 void random_flicker_white(unsigned long t, uint8_t* buffer, uint16_t N)
@@ -173,8 +164,7 @@ void random_flicker_white(unsigned long t, uint8_t* buffer, uint16_t N)
 		buffer[i*3] = 0xff;
 		buffer[i*3+1] = 0xff;
 		buffer[i*3+2] = 0xff;
-	}
-	
+	}	
 }
 
 
@@ -182,22 +172,14 @@ void update_buffer(unsigned long t, uint8_t* buffer, uint16_t N)
 {
 	random_flicker_random_hue(t,buffer, N);
 	smear(t,buffer, N, 0.05);
-	darken(t,buffer, N, 1);
-	
-	
+	darken(t,buffer, N, 1);	
 }
 
 int main(void)
-{
-	
+{	
 	uint8_t val;
 	// set for 16 MHz clock, and make sure the LED is off
 	CPU_PRESCALE(0);
-
-	// initialize the USB, but don't want for the host to
-	// configure.  The first several messages sent will be
-	// lost because the PC hasn't configured the USB yet,
-	usb_init();
 
 	// Set MOSI and SCK output, all others input
 	DDR_SPI = (1<<DD_MOSI)|(1<<DD_SCK);
@@ -213,15 +195,10 @@ int main(void)
 	unsigned long t = 0;
 		
 	while (1) {
-		//phex(val);
-		//print("Loop\n");
 		update_buffer(t,buffer,NLEDS);
 		draw(buffer,NLEDS);
-		//for (int i=0;i<25*3;i++)
-		//	softspi_send(val);
 		PORT_SPI &= ~_BV(DD_SCK);
 		_delay_ms(15);
 		t ++;
 	}
 }
-
